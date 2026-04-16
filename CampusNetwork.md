@@ -7,15 +7,7 @@ sysname A1
 #
 vlan batch 10 20 60 80 90
 #
-cluster enable
-ntdp enable
-ndp enable
-#
-drop illegal-mac alarm
-#
 dhcp enable
-#
-diffserv domain default
 #
 stp region-configuration
  region-name HCIP
@@ -24,16 +16,62 @@ stp region-configuration
  instance 2 vlan 20
  active region-configuration
 #
-drop-profile default
+interface Vlanif60
+ dhcp select global
+ dhcp select relay
+ dhcp relay server-ip 10.0.100.2
 #
-aaa
- authentication-scheme default
- authorization-scheme default
- accounting-scheme default
- domain default
- domain default_admin
- local-user admin password simple admin
- local-user admin service-type http
+interface Vlanif80
+ dhcp select global
+ dhcp select relay
+ dhcp relay server-ip 10.0.100.2
+#
+interface Vlanif90
+ dhcp select global
+ dhcp select relay
+ dhcp relay server-ip 10.0.100.2
+#
+interface Ethernet0/0/1
+ port link-type access
+ port default vlan 10
+#
+interface Ethernet0/0/2
+ port link-type access
+ port default vlan 20
+#
+interface Ethernet0/0/21
+#
+interface Ethernet0/0/22
+ port link-type trunk
+ port trunk pvid vlan 60
+ port trunk allow-pass vlan 60 80 90
+#
+interface GigabitEthernet0/0/1
+ port link-type trunk
+ port trunk allow-pass vlan 10 20 60 80 90
+#
+interface GigabitEthernet0/0/2
+ port link-type trunk
+ port trunk allow-pass vlan 10 20 60 80 90
+#
+return
+```
+
+A2 Switch
+```shell
+#
+sysname A2
+#
+vlan batch 10 20 60 80 90
+#
+dhcp enable
+#
+stp region-configuration
+ region-name HCIP
+ revision-level 1
+ instance 1 vlan 10
+ instance 2 vlan 20
+ active region-configuration
 #
 interface Vlanif1
 #
@@ -52,8 +90,6 @@ interface Vlanif90
  dhcp select relay
  dhcp relay server-ip 10.0.100.2
 #
-interface MEth0/0/1
-#
 interface Ethernet0/0/1
  port link-type access
  port default vlan 10
@@ -61,44 +97,6 @@ interface Ethernet0/0/1
 interface Ethernet0/0/2
  port link-type access
  port default vlan 20
-#
-interface Ethernet0/0/3
-#
-interface Ethernet0/0/4
-#
-interface Ethernet0/0/5
-#
-interface Ethernet0/0/6
-#
-interface Ethernet0/0/7
-#
-interface Ethernet0/0/8
-#
-interface Ethernet0/0/9
-#
-interface Ethernet0/0/10
-#
-interface Ethernet0/0/11
-#
-interface Ethernet0/0/12
-#
-interface Ethernet0/0/13
-#
-interface Ethernet0/0/14
-#
-interface Ethernet0/0/15
-#
-interface Ethernet0/0/16
-#
-interface Ethernet0/0/17
-#
-interface Ethernet0/0/18
-#
-interface Ethernet0/0/19
-#
-interface Ethernet0/0/20
-#
-interface Ethernet0/0/21
 #
 interface Ethernet0/0/22
  port link-type trunk
@@ -113,38 +111,594 @@ interface GigabitEthernet0/0/2
  port link-type trunk
  port trunk allow-pass vlan 10 20 60 80 90
 #
-interface NULL0
+return
+```
+
+Conv1 Switch
+```shell
+#
+sysname dist1
+#
+vlan batch 10 20 60 80 90 201 203
+#
+stp instance 1 root primary
+stp instance 2 root secondary
+#
+dhcp enable
+#
+stp region-configuration
+ region-name HCIP
+ revision-level 1
+ instance 1 vlan 10
+ instance 2 vlan 20
+ active region-configuration
+#
+ip pool ap
+ gateway-list 172.16.60.1
+ network 172.16.60.0 mask 255.255.255.0
+ option 43 sub-option 2 ip-address 10.0.100.2
+#
+ip pool employee
+ gateway-list 172.16.80.1
+ network 172.16.80.0 mask 255.255.255.0
+ dns-list 114.114.114.114
+#
+ip pool guest
+ gateway-list 172.16.90.1
+ network 172.16.90.0 mask 255.255.255.0
+ dns-list 114.114.114.114
+#
+interface Vlanif10
+ ip address 172.16.10.1 255.255.255.0
+ vrrp vrid 1 virtual-ip 172.16.10.254
+ vrrp vrid 1 priority 110
+#
+interface Vlanif20
+ ip address 172.16.20.1 255.255.255.0
+ vrrp vrid 2 virtual-ip 172.16.20.254
+#
+interface Vlanif60
+ ip address 172.16.60.1 255.255.255.0
+ dhcp select global
+ dhcp select relay
+ dhcp relay server-ip 10.0.100.2
+#
+interface Vlanif80
+ ip address 172.16.80.1 255.255.255.0
+ dhcp select global
+ dhcp select relay
+ dhcp relay server-ip 10.0.100.2
+#
+interface Vlanif90
+ ip address 172.16.90.1 255.255.255.0
+ dhcp select global
+ dhcp select relay
+ dhcp relay server-ip 10.0.100.2
+#
+interface Vlanif201
+ ip address 10.0.201.2 255.255.255.0
+#
+interface Vlanif203
+ ip address 10.0.203.2 255.255.255.0
+#
+interface Eth-Trunk1
+ port link-type trunk
+ port trunk allow-pass vlan 10 20 60 80 90
+ mode lacp-static
+#
+interface GigabitEthernet0/0/1
+ port link-type access
+ port default vlan 201
+ stp disable
+#
+interface GigabitEthernet0/0/2
+ port link-type access
+ port default vlan 203
+ stp disable
+#
+interface GigabitEthernet0/0/3
+ port link-type trunk
+ port trunk allow-pass vlan 10 20 60 80 90
+#
+interface GigabitEthernet0/0/4
+ port link-type trunk
+ port trunk allow-pass vlan 10 20 60 80 90
+#
+interface GigabitEthernet0/0/23
+ eth-trunk 1
+#
+interface GigabitEthernet0/0/24
+ eth-trunk 1
+#
+interface LoopBack0
+ ip address 10.0.10.3 255.255.255.0
+#
+ospf 1 router-id 10.0.10.3
+ area 0.0.0.0
+  network 10.0.201.2 0.0.0.0
+  network 10.0.203.2 0.0.0.0
+  network 10.0.10.3 0.0.0.0
+  network 172.16.10.1 0.0.0.0
+  network 172.16.20.1 0.0.0.0
+  network 172.16.60.1 0.0.0.0
+  network 172.16.80.1 0.0.0.0
+  network 172.16.90.1 0.0.0.0
+#
+return
+```
+
+Conv2 Switch
+```shell
+#
+sysname dist2
+#
+vlan batch 10 20 60 80 90 202 204
+#
+stp instance 1 root secondary
+stp instance 2 root primary
+#
+dhcp enable
+#
+stp region-configuration
+ region-name HCIP
+ revision-level 1
+ instance 1 vlan 10
+ instance 2 vlan 20
+ active region-configuration
+#
+ip pool ap
+ gateway-list 172.16.60.1
+ network 172.16.60.0 mask 255.255.255.0
+ option 43 sub-option 2 ip-address 10.0.100.2
+#
+ip pool employee
+ gateway-list 172.16.80.1
+ network 172.16.80.0 mask 255.255.255.0
+ dns-list 114.114.114.114
+#
+ip pool guest
+ gateway-list 172.16.90.1
+ network 172.16.90.0 mask 255.255.255.0
+ dns-list 114.114.114.114
+#
+interface Vlanif1
+#
+interface Vlanif10
+ ip address 172.16.10.2 255.255.255.0
+ vrrp vrid 1 virtual-ip 172.16.10.254
+#
+interface Vlanif20
+ ip address 172.16.20.2 255.255.255.0
+ vrrp vrid 2 virtual-ip 172.16.20.254
+ vrrp vrid 2 priority 110
+#
+interface Vlanif60
+ ip address 172.16.60.2 255.255.255.0
+ dhcp select global
+ dhcp select relay
+ dhcp relay server-ip 10.0.100.2
+#
+interface Vlanif80
+ ip address 172.16.80.2 255.255.255.0
+ dhcp select global
+ dhcp select relay
+ dhcp relay server-ip 10.0.100.2
+#
+interface Vlanif90
+ ip address 172.16.90.2 255.255.255.0
+ dhcp select global
+ dhcp select relay
+ dhcp relay server-ip 10.0.100.2
+#
+interface Vlanif202
+ ip address 10.0.202.2 255.255.255.0
+#
+interface Vlanif204
+ ip address 10.0.204.2 255.255.255.0
+#
+interface Eth-Trunk1
+ port link-type trunk
+ port trunk allow-pass vlan 10 20 60 80 90
+ mode lacp-static
+#
+interface GigabitEthernet0/0/1
+ port link-type access
+ port default vlan 202
+ stp disable
+#
+interface GigabitEthernet0/0/2
+ port link-type access
+ port default vlan 204
+ stp disable
+#
+interface GigabitEthernet0/0/3
+ port link-type trunk
+ port trunk allow-pass vlan 10 20 60 80 90
+#
+interface GigabitEthernet0/0/4
+ port link-type trunk
+ port trunk allow-pass vlan 10 20 60 80 90
+#
+interface GigabitEthernet0/0/23
+ eth-trunk 1
+#
+interface GigabitEthernet0/0/24
+ eth-trunk 1
+#
+interface LoopBack0
+ ip address 10.0.10.4 255.255.255.0
+#
+ospf 1 router-id 10.0.10.4
+ area 0.0.0.0
+  network 10.0.202.2 0.0.0.0
+  network 10.0.204.2 0.0.0.0
+  network 10.0.10.4 0.0.0.0
+  network 172.16.10.2 0.0.0.0
+  network 172.16.20.2 0.0.0.0
+  network 17.16.60.2 0.0.0.0
+  network 17.16.80.2 0.0.0.0
+  network 17.16.90.2 0.0.0.0
+#
+return
+```
+
+Core1 Switch
+```shell
+#
+sysname C1
+#
+vlan batch 60 80 90 100 to 102 201 to 202
+#
+stp disable
+#
+dhcp enable
+#
+ip pool ap
+ gateway-list 172.16.60.1
+ network 172.16.60.0 mask 255.255.255.0
+ option 43 hex 01 04 0A 00 64 02
+#
+aaa
+ local-user user1 password cipher <K.R)YFE!!(I\I9%HS7.!Q!!
+ local-user user1 service-type ssh
+#
+interface Vlanif60
+ ip address 172.16.60.1 255.255.255.0
+ dhcp select global
+#
+interface Vlanif80
+ ip address 172.16.80.1 255.255.255.0
+ dhcp select global
+#
+interface Vlanif90
+ ip address 172.16.90.1 255.255.255.0
+ dhcp select global
+#
+interface Vlanif100
+ ip address 10.0.100.1 255.255.255.0
+#
+interface Vlanif101
+ ip address 10.0.2.2 255.255.255.0
+#
+interface Vlanif102
+ ip address 10.0.102.1 255.255.255.0
+#
+interface Vlanif201
+ ip address 10.0.201.1 255.255.255.0
+#
+interface Vlanif202
+ ip address 10.0.202.1 255.255.255.0
+#
+interface GigabitEthernet0/0/1
+ port link-type access
+ port default vlan 201
+#
+interface GigabitEthernet0/0/2
+ port link-type access
+ port default vlan 202
+#
+interface GigabitEthernet0/0/21
+ port link-type access
+ port default vlan 101
+#
+interface GigabitEthernet0/0/22
+ port link-type access
+ port default vlan 100
+#
+interface GigabitEthernet0/0/24
+ port link-type access
+ port default vlan 102
+#
+interface LoopBack0
+ ip address 10.0.10.1 255.255.255.0
+#
+ospf 1 router-id 10.0.10.1
+ area 0.0.0.0
+  network 10.0.10.1 0.0.0.0
+  network 10.0.100.1 0.0.0.0
+  network 10.0.102.1 0.0.0.0
+  network 10.0.2.2 0.0.0.0
+  network 10.0.201.1 0.0.0.0
+  network 10.0.202.1 0.0.0.0
+  network 172.16.60.1 0.0.0.0
+  network 172.16.80.1 0.0.0.0
+  network 172.16.90.1 0.0.0.0
+#
+ip route-static 10.10.10.0 255.255.255.0 10.0.100.2
+#
+stelnet server enable
+ssh user user1 authentication-type password
+ssh user user1 service-type stelnet
+ssh client first-time enable
 #
 user-interface con 0
 user-interface vty 0 4
+ authentication-mode aaa
+ user privilege level 15
+ protocol inbound ssh
 #
 return
-
 ```
 
+Core2 Switch
 ```shell
+#
+sysname C2
+#
+vlan batch 60 80 90 100 102 104 203 to 205
+#
+dhcp enable
+#
+ip pool ap
+ gateway-list 172.16.60.1
+ network 172.16.60.0 mask 255.255.255.0
+ option 43 hex 01 04 0A 00 64 02
+#
+interface Vlanif60
+ ip address 172.16.60.2 255.255.255.0
+ dhcp select global
+#
+interface Vlanif80
+ ip address 172.16.80.2 255.255.255.0
+ dhcp select global
+#
+interface Vlanif90
+ ip address 172.16.90.2 255.255.255.0
+ dhcp select global
+#
+interface Vlanif100
+ ip address 10.0.100.3 255.255.255.0
+#
+interface Vlanif102
+ ip address 10.0.102.2 255.255.255.0
+#
+interface Vlanif104
+ ip address 10.0.4.2 255.255.255.0
+#
+interface Vlanif203
+ ip address 10.0.203.1 255.255.255.0
+#
+interface Vlanif204
+ ip address 10.0.204.1 255.255.255.0
+#
+interface Vlanif205
+ ip address 10.0.205.2 255.255.255.0
+#
+interface GigabitEthernet0/0/1
+ port link-type access
+ port default vlan 203
+#
+interface GigabitEthernet0/0/2
+ port link-type access
+ port default vlan 204
+#
+interface GigabitEthernet0/0/20
+ port link-type access
+ port default vlan 205
+#
+interface GigabitEthernet0/0/21
+ port link-type access
+ port default vlan 104
+#
+interface GigabitEthernet0/0/22
+ port link-type access
+ port default vlan 100
+#
+interface GigabitEthernet0/0/23
+#
+interface GigabitEthernet0/0/24
+ port link-type access
+ port default vlan 102
+#
+interface LoopBack0
+ ip address 10.0.10.2 255.255.255.0
+#
+ospf 1 router-id 10.0.10.2
+ area 0.0.0.0
+  network 10.0.100.3 0.0.0.0
+  network 10.0.102.2 0.0.0.0
+  network 10.0.4.2 0.0.0.0
+  network 10.0.203.1 0.0.0.0
+  network 10.0.204.1 0.0.0.0
+  network 10.0.205.2 0.0.0.0
+  network 172.16.60.2 0.0.0.0
+  network 172.16.80.2 0.0.0.0
+  network 172.16.90.2 0.0.0.0
+#
+return
 ```
 
+Access-controller (AC1)
 ```shell
+#
+ sysname AC1
+#
+vlan batch 100
+#
+dhcp enable
+#
+ip pool ap
+ gateway-list 172.16.60.1 
+ network 172.16.60.0 mask 255.255.255.0 
+ dns-list 114.114.114.114 
+ option 43 sub-option 2 ip-address 10.0.100.2  
+#
+interface Vlanif100
+ ip address 10.0.100.2 255.255.255.0
+ dhcp select global
+#
+interface GigabitEthernet0/0/1
+ port link-type access
+ port default vlan 100
+#
+interface GigabitEthernet0/0/2
+ port link-type access
+ port default vlan 100
+#
+interface LoopBack0
+ ip address 10.10.10.10 255.255.255.0
+#
+ip route-static 0.0.0.0 0.0.0.0 10.0.100.1
+#
+capwap source interface vlanif100
+#
+wlan
+ security-profile name guest
+ security-profile name employee
+  security wpa-wpa2 psk pass-phrase %^%#BS81>e&RbD;gSDFgY0YWj}kzTTbp2Cp@3rA[=j#3
+%^%# aes
+ ssid-profile name guest
+  ssid guest
+ ssid-profile name employee
+  ssid employee
+ vap-profile name guest
+  service-vlan vlan-id 90
+  ssid-profile guest
+  security-profile guest
+ vap-profile name employee
+  service-vlan vlan-id 80
+  ssid-profile employee
+  security-profile employee
+ regulatory-domain-profile name Huawei
+  country-code US
+ serial-profile name preset-enjoyor-toeap 
+ ap auth-mode no-auth
+ ap-group name Huawei
+  regulatory-domain-profile Huawei
+  radio 0
+   vap-profile employee wlan 1
+   vap-profile guest wlan 2
+  radio 1
+   vap-profile employee wlan 1
+   vap-profile guest wlan 2
+  radio 2
+   vap-profile employee wlan 1
+   vap-profile guest wlan 2
+ ap-group name default
+ ap-id 0 type-id 69 ap-mac 00e0-fc23-74f0 ap-sn 210235448310E9219038
+  ap-name AP1
+  ap-group Huawei
+ ap-id 1 type-id 69 ap-mac 00e0-fc3d-04b0 ap-sn 2102354483106D60933C
+  ap-name AP2
+  ap-group Huawei
+#
+return
 ```
 
+R1 Router
 ```shell
+#
+ sysname R1
+#
+acl number 2000  
+ rule 5 permit source 10.0.0.0 0.255.255.255 
+ rule 10 permit source 192.168.0.0 0.0.255.255 
+ rule 15 permit source 172.16.0.0 0.0.255.255 
+ rule 20 permit source 202.96.1.0 0.0.0.255 
+#
+aaa 
+ local-user user1 password cipher %$%$Q&LA4wq7%@LYa:S8r)3)[u7b%$%$
+ local-user user1 service-type ssh
+#
+interface GigabitEthernet0/0/0
+ ip address 10.0.2.1 255.255.255.0 
+#
+interface GigabitEthernet0/0/1
+ ip address 10.0.4.1 255.255.255.0 
+#
+interface GigabitEthernet0/0/2
+ ip address 10.0.3.1 255.255.255.0 
+#
+interface GigabitEthernet1/0/0
+ ip address 202.96.1.1 255.255.255.0 
+ nat server protocol tcp global 202.96.1.100 ftp inside 10.0.205.19 ftp
+ nat outbound 2000
+#
+interface LoopBack0
+ ip address 10.0.1.1 255.255.255.255 
+#
+ospf 1 router-id 10.0.1.1 
+ default-route-advertise cost 20 type 1
+ area 0.0.0.0 
+  network 10.0.1.1 0.0.0.0 
+  network 10.0.2.1 0.0.0.0 
+  network 10.0.4.1 0.0.0.0 
+  network 202.96.1.1 0.0.0.0 
+ area 0.0.0.1 
+  network 10.0.3.1 0.0.0.0 
+#
+ ssh client 10.0.2.2 assign rsa-key 10.0.2.2
+ ssh client first-time enable 
+ stelnet server enable 
+#
+ip route-static 0.0.0.0 0.0.0.0 202.96.1.4
+#
+user-interface vty 0 4
+ authentication-mode aaa
+ user privilege level 15
+ protocol inbound ssh
+#
+return
 ```
 
+R4 Router
 ```shell
+#
+ sysname R4
+#
+acl number 2000  
+ rule 5 permit source 202.96.1.0 0.0.0.255 
+ rule 10 permit source 202.100.4.0 0.0.0.255 
+#
+interface GigabitEthernet0/0/0
+ ip address 202.96.1.4 255.255.255.0 
+ traffic-filter inbound acl 2000
+#
+interface LoopBack0
+ ip address 202.100.4.1 255.255.255.0 
+#
+return
 ```
 
+R2 Router
 ```shell
-```
-
-```shell
-```
-
-```shell
-```
-
-```shell
-```
-
-```shell
+#
+ sysname R2
+#
+interface GigabitEthernet0/0/0
+ ip address 10.0.3.2 255.255.255.0 
+#
+interface GigabitEthernet0/0/1
+ ip address 192.168.100.1 255.255.255.0 
+#
+interface LoopBack0
+ ip address 10.0.20.1 255.255.255.255 
+#
+ospf 1 router-id 10.0.20.1 
+ area 0.0.0.1 
+  network 10.0.3.2 0.0.0.0 
+  network 10.0.20.1 0.0.0.0 
+  network 192.168.100.1 0.0.0.0 
+#
+return
 ```
